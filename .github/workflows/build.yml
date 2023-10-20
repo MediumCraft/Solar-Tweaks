@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          cd Solar-Tweaks
+          #cd Solar-Tweaks
           npm install
           npm run build
         env:
