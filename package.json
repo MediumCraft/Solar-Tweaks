@@ -9,7 +9,7 @@
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Solar-Tweaks/Solar-Tweaks-V4.git"
+    "url": "https://github.com/MediumCraft/Solar-Tweaks.git"
   },
   "scripts": {
     "lint": "vue-cli-service lint",
