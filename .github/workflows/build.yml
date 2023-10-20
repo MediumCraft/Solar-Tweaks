@@ -1,40 +1,66 @@
-name: 'Build'
+name: 'Build and Release'
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@master
-      - uses: actions/setup-node@master
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
           node-version: 16
-      - run: npm install
-      - run: npm run build
+
+      - name: Install dependencies and build
+        run: |
+          cd Solar-Tweaks
+          npm install
+          npm run build
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: release
-          path: dist
+          name: release-${{ runner.os }}
+          path: Solar-Tweaks/dist
 
-      - name: Set outputs
-        id: short_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      - name: Publish Release
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Combine artifacts
+        run: |
+          mkdir combined_artifacts
+          cp -r ${{ runner.workspace }}/dist/* combined_artifacts
+          cp -r ${{ runner.workspace }}/dist-*/* combined_artifacts
+        working-directory: ${{ runner.workspace }}
+
+      - name: Upload combined artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: all-artifacts
+          path: combined_artifacts
+
+      - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/*
+          files: combined_artifacts/*
           body: |
-            Commit ${{ steps.short_sha.outputs.sha_short }}
+            Commit ${{ github.sha }}
             This release is automatically compiled by GitHub Actions
-          name: Solar-Tweaks ${{ steps.short_sha.outputs.sha_short }}
+          name: Solar-Tweaks ${{ github.sha }}
           draft: false
-          tag_name: commit-${{ steps.short_sha.outputs.sha_short }}
+          tag_name: commit-${{ github.sha }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
