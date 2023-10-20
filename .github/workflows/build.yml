@@ -31,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: release-${{ runner.os }}
-          path: Solar-Tweaks/dist
+          path: dist
 
   release:
     needs: build
